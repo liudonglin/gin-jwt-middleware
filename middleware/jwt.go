@@ -199,6 +199,12 @@ func JWTWithConfig(config JWTConfig) gin.HandlerFunc {
 	}
 }
 
+var (
+	ErrHeaderJWTMissing = errors.New("missing or malformed jwt in the header")
+	ErrQueryJWTMissing  = errors.New("missing or malformed jwt in the query")
+	ErrCookieJWTMissing = errors.New("missing or malformed jwt in the cookie")
+)
+
 //仅header模式需要authScheme
 func jwtFromHeader(header string, authScheme string) jwtExtractor {
 	return func(c *gin.Context) (string, error) {
@@ -207,7 +213,7 @@ func jwtFromHeader(header string, authScheme string) jwtExtractor {
 		if len(auth) > l+1 && auth[:l] == authScheme {
 			return auth[l+1:], nil
 		}
-		return "", errors.New("missing or malformed jwt in the header")
+		return "", ErrHeaderJWTMissing
 	}
 }
 
@@ -215,7 +221,7 @@ func jwtFromQuery(param string) jwtExtractor {
 	return func(c *gin.Context) (string, error) {
 		token := c.Query(param)
 		if token == "" {
-			return "", errors.New("missing or malformed jwt in the query")
+			return "", ErrQueryJWTMissing
 		}
 		return token, nil
 	}
@@ -225,7 +231,7 @@ func jwtFromCookie(name string) jwtExtractor {
 	return func(c *gin.Context) (string, error) {
 		cookie, err := c.Cookie(name)
 		if err != nil {
-			return "", errors.New("missing or malformed jwt in the cookie")
+			return "", ErrCookieJWTMissing
 		}
 		return cookie, nil
 	}
